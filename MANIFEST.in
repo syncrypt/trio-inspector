@@ -1,0 +1,4 @@
+include README.md LICENSE* CONTRIBUTING*
+include trio_inspector/static/style.css
+include trio_inspector/static/main.js
+include trio_inspector/static/index.html

@@ -1,0 +1,7 @@
+.mypy_cache/
+venv/
+build/
+dist/
+trio_inspector/static/
+__pycache__
+trio_inspector.egg-info/

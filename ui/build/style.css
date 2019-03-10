@@ -1,0 +1,11 @@
+.tasktree i.material-icons {
+    vertical-align: bottom;
+}
+
+.tasktree-item {
+    padding-left: 20px;
+}
+
+.tasktree > .tasktree-item {
+    padding-left: 0px;
+}
