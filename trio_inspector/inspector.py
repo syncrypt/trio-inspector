@@ -109,8 +109,8 @@ class TrioInspector(trio.abc.Instrument):
         app.add_url_rule('/stats.json', 'stats', self.dispatch_stats, ['GET'])
 
         config = HyperConfig()
-        config.access_log_format = '%(h)s %(r)s %(s)s %(b)s %(D)s'
-        config.access_logger = create_serving_logger()  # type: ignore
+        #config.access_log_format = '%(h)s %(r)s %(s)s %(b)s %(D)s'
+        #config.access_logger = create_serving_logger()  # type: ignore
         config.bind = [f'{self._host}:{self._port}']
         config.error_logger = config.access_logger  # type: ignore
 
