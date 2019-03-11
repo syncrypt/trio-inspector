@@ -24,6 +24,7 @@ import Json.Decode
         , succeed
         , value
         )
+import Time
 
 
 -- MAIN
@@ -69,15 +70,17 @@ type Tasks
     = Tasks (List Task)
 
 
-type Model
-    = Failure
-    | Loading
-    | Success Task
+type alias Model =
+    { rootTask : Maybe Task
+    , stats : Maybe Stats
+    }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Loading, Cmd.batch [ loadTasks, loadStats ] )
+    ( { rootTask = Nothing, stats = Nothing }
+    , Cmd.batch [ loadTasks, loadStats ]
+    )
 
 
 
@@ -99,13 +102,18 @@ update msg model =
         GotTasks result ->
             case result of
                 Ok rootTask ->
-                    ( Success rootTask, Cmd.none )
+                    ( { model | rootTask = Just rootTask }, Cmd.none )
 
                 Err _ ->
-                    ( Failure, Cmd.none )
+                    ( { model | rootTask = Nothing }, Cmd.none )
 
         GotStats result ->
-            ( model, Cmd.none )
+            case result of
+                Ok stats ->
+                    ( { model | stats = Just stats }, Cmd.none )
+
+                Err _ ->
+                    ( { model | stats = Nothing }, Cmd.none )
 
 
 
@@ -114,7 +122,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Time.every (2 * 1000) (\_ -> Update)
 
 
 
@@ -145,22 +153,54 @@ viewMain : Model -> Html Msg
 viewMain model =
     div [ class "card" ]
         [ navBar
-        , case model of
-            Failure ->
-                div []
-                    [ text "Failure"
-                    , button [ onClick Update ] [ text "Try Again!" ]
-                    ]
+        , div [ class "container" ]
+            [ div [ class "row" ]
+                [ div [ class "tasktree col-sm-6" ]
+                    [ case model.rootTask of
+                        Nothing ->
+                            div [] []
 
-            Loading ->
-                text "Loading..."
-
-            Success rootTask ->
-                div []
-                    [ button [ onClick Update, style "display" "block" ]
-                        [ text "Reload" ]
-                    , div [ class "tasktree" ] [ viewTaskTree rootTask ]
+                        Just rootTask ->
+                            viewTaskTree rootTask
                     ]
+                , div [ class "stats col-sm-6" ]
+                    [ case model.stats of
+                        Nothing ->
+                            div [] []
+
+                        Just stats ->
+                            viewStats stats
+                    ]
+                ]
+            ]
+        ]
+
+
+viewStats : Stats -> Html Msg
+viewStats stats =
+    div []
+        [ table [ class "table table-sm" ]
+            [ thead []
+                [ tr []
+                    [ th [ scope "col" ] [ text "Name" ]
+                    , th [ scope "col" ] [ text "Value" ]
+                    ]
+                ]
+            , tbody []
+                [ tr []
+                    [ th [ scope "row" ] [ text "Number of tasks" ]
+                    , td [ scope "col" ] [ text (String.fromInt stats.tasksLiving) ]
+                    ]
+                , tr []
+                    [ th [ scope "row" ] [ text "Number of queued tasks" ]
+                    , td [ scope "col" ] [ text (String.fromInt stats.tasksRunnable) ]
+                    ]
+                , tr []
+                    [ th [ scope "row" ] [ text "IO backend" ]
+                    , td [ scope "col" ] [ text stats.ioStatisticsBackend ]
+                    ]
+                ]
+            ]
         ]
 
 
