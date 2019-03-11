@@ -20,3 +20,5 @@ async with trio.open_nursery() as nursery:
 ```
 
 Then, point your browser to: http://127.0.0.1:5000/
+
+If you want to try it out, you can download and run [this example](tests/example.py).
