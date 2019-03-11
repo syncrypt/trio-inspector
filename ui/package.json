@@ -1,0 +1,7 @@
+{
+  "name": "trio-inspector",
+  "version": "0.0.1",
+  "dependencies": {
+    "elm": "*"
+  }
+}
