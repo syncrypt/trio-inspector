@@ -34,24 +34,18 @@ setup(
     ],
     python_requires=">=3.5",
     classifiers=[
-        "License :: OSI Approved :: MIT License",
-        "License :: OSI Approved :: Apache Software License",
+        "Development Status :: 3 - Alpha",
         "Framework :: Trio",
-        "Operating System :: POSIX :: Linux",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: Apache Software License",
+        "License :: OSI Approved :: MIT License",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
-        "Development Status :: 3 - Alpha",
-
-        # COOKIECUTTER-TRIO-TODO: Consider adding trove classifiers for:
-        #
-        # - Development Status
-        # - Intended Audience
-        # - Topic
-        #
-        # For the full list of options, see:
-        #   https://pypi.python.org/pypi?%3Aaction=list_classifiers
+        "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+        "Topic :: Software Development :: Debuggers",
     ],
 )
