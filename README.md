@@ -5,7 +5,7 @@ Note: This is a very early prototype.
 ## Installation
 
 ```
-pip install git+https://github.com/syncrypt/trio-inspector.git
+pip install trio-inspector
 ```
 
 ## Usage
