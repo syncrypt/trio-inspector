@@ -23,6 +23,7 @@ setup(
     },
     install_requires=[
         "trio",
+        "trio-typing",
         "hypercorn",
         "quart-trio",
         "quart",
