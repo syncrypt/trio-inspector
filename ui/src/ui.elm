@@ -18,6 +18,7 @@ import Json.Decode
         , map
         , map2
         , map3
+        , map4
         , map5
         , nullable
         , string
@@ -70,16 +71,29 @@ type Tasks
     = Tasks (List Task)
 
 
+type alias StackFrame =
+    { name : String
+    , filename : String
+    , lineno : Int
+    , line : String
+    }
+
+
+type alias Stacktrace =
+    List StackFrame
+
+
 type alias Model =
     { rootTask : Maybe Task
     , stats : Maybe Stats
+    , stacktrace : Maybe Stacktrace
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { rootTask = Nothing, stats = Nothing }
-    , Cmd.batch [ loadTasks, loadStats ]
+    ( { rootTask = Nothing, stats = Nothing, stacktrace = Nothing }
+    , Cmd.batch [ loadTasks, loadStats, loadStacktrace ]
     )
 
 
@@ -91,13 +105,14 @@ type Msg
     = Update
     | GotTasks (Result Http.Error Task)
     | GotStats (Result Http.Error Stats)
+    | GotStacktrace (Result Http.Error Stacktrace)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Update ->
-            ( model, Cmd.batch [ loadTasks, loadStats ] )
+            ( model, Cmd.batch [ loadTasks, loadStats, loadStacktrace ] )
 
         GotTasks result ->
             case result of
@@ -114,6 +129,14 @@ update msg model =
 
                 Err _ ->
                     ( { model | stats = Nothing }, Cmd.none )
+
+        GotStacktrace result ->
+            case result of
+                Ok stacktrace ->
+                    ( { model | stacktrace = Just stacktrace }, Cmd.none )
+
+                Err _ ->
+                    ( { model | stacktrace = Nothing }, Cmd.none )
 
 
 
@@ -164,7 +187,13 @@ viewMain model =
                             viewTaskTree rootTask
                     ]
                 , div [ class "stats col-sm-6" ]
-                    [ case model.stats of
+                    [ case model.stacktrace of
+                        Nothing ->
+                            div [] []
+
+                        Just stacktrace ->
+                            viewStacktrace stacktrace
+                    , case model.stats of
                         Nothing ->
                             div [] []
 
@@ -202,6 +231,38 @@ viewStats stats =
                 ]
             ]
         ]
+
+
+viewStacktrace : Stacktrace -> Html Msg
+viewStacktrace stacktrace =
+    div [ class "list-group" ]
+        (List.map
+            (\frame ->
+                let
+                    basename =
+                        String.split "/" frame.filename |> List.reverse |> List.head
+
+                    basenameWithLineNo =
+                        case basename of
+                            Nothing ->
+                                "-"
+
+                            Just name ->
+                                name
+                                    ++ ":"
+                                    ++ String.fromInt frame.lineno
+                in
+                div [ class "list-group-item flex-column align-items-start" ]
+                    [ div [ class "d-flex w-100 justify-content-between" ]
+                        [ h5 [ class "mb-1" ] [ text frame.name ]
+                        , small [] [ text basenameWithLineNo ]
+                        ]
+                    , p [ class "mb-1" ] [ text frame.line ]
+                    , small [] [ text frame.filename ]
+                    ]
+            )
+            stacktrace
+        )
 
 
 viewTaskTree : Task -> Html Msg
@@ -259,6 +320,14 @@ loadStats =
         }
 
 
+loadStacktrace : Cmd Msg
+loadStacktrace =
+    Http.get
+        { url = "http://127.0.0.1:5000/traceback.json"
+        , expect = Http.expectJson GotStacktrace stacktraceDecoder
+        }
+
+
 nurseryDecoder : Decoder Nursery
 nurseryDecoder =
     map3 Nursery
@@ -288,3 +357,18 @@ statsDecoder =
         (field "seconds_to_next_deadline" (nullable float))
         (field "run_sync_soon_queue_size" int)
         (field "io_statistics_backend" string)
+
+
+stackFrameDecoder : Decoder StackFrame
+stackFrameDecoder =
+    map4
+        StackFrame
+        (field "name" string)
+        (field "filename" string)
+        (field "lineno" int)
+        (field "line" string)
+
+
+stacktraceDecoder : Decoder Stacktrace
+stacktraceDecoder =
+    field "stacktrace" (list stackFrameDecoder)
