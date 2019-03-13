@@ -1,0 +1,19 @@
+language: python
+
+# sudo false implies containerized builds
+sudo: false
+
+python:
+  - 3.6
+  - 3.7
+
+env:
+  global:
+    - PACKAGE_NAME="trio_inspector"
+
+install:
+- pip install .
+- pip install mypy
+
+script:
+- mypy $PACKAGE_NAME --ignore-missing-imports
