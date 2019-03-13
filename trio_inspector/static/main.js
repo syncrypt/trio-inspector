@@ -4531,12 +4531,12 @@ function _Browser_load(url)
 		}
 	}));
 }
-var author$project$Main$GotStats = function (a) {
-	return {$: 'GotStats', a: a};
+var author$project$Main$GotStacktrace = function (a) {
+	return {$: 'GotStacktrace', a: a};
 };
-var author$project$Main$Stats = F5(
-	function (tasksLiving, tasksRunnable, secondsToNextDeadline, runSyncSoonQueueSize, ioStatisticsBackend) {
-		return {ioStatisticsBackend: ioStatisticsBackend, runSyncSoonQueueSize: runSyncSoonQueueSize, secondsToNextDeadline: secondsToNextDeadline, tasksLiving: tasksLiving, tasksRunnable: tasksRunnable};
+var author$project$Main$StackFrame = F4(
+	function (name, filename, lineno, line) {
+		return {filename: filename, line: line, lineno: lineno, name: name};
 	});
 var elm$core$Array$branchFactor = 32;
 var elm$core$Array$Array_elm_builtin = F4(
@@ -5014,32 +5014,21 @@ var elm$json$Json$Decode$errorToStringHelp = F2(
 		}
 	});
 var elm$json$Json$Decode$field = _Json_decodeField;
-var elm$json$Json$Decode$float = _Json_decodeFloat;
 var elm$json$Json$Decode$int = _Json_decodeInt;
-var elm$json$Json$Decode$map5 = _Json_map5;
-var elm$json$Json$Decode$map = _Json_map1;
-var elm$json$Json$Decode$null = _Json_decodeNull;
-var elm$json$Json$Decode$oneOf = _Json_oneOf;
-var elm$json$Json$Decode$nullable = function (decoder) {
-	return elm$json$Json$Decode$oneOf(
-		_List_fromArray(
-			[
-				elm$json$Json$Decode$null(elm$core$Maybe$Nothing),
-				A2(elm$json$Json$Decode$map, elm$core$Maybe$Just, decoder)
-			]));
-};
+var elm$json$Json$Decode$map4 = _Json_map4;
 var elm$json$Json$Decode$string = _Json_decodeString;
-var author$project$Main$statsDecoder = A6(
-	elm$json$Json$Decode$map5,
-	author$project$Main$Stats,
-	A2(elm$json$Json$Decode$field, 'tasks_living', elm$json$Json$Decode$int),
-	A2(elm$json$Json$Decode$field, 'tasks_runnable', elm$json$Json$Decode$int),
-	A2(
-		elm$json$Json$Decode$field,
-		'seconds_to_next_deadline',
-		elm$json$Json$Decode$nullable(elm$json$Json$Decode$float)),
-	A2(elm$json$Json$Decode$field, 'run_sync_soon_queue_size', elm$json$Json$Decode$int),
-	A2(elm$json$Json$Decode$field, 'io_statistics_backend', elm$json$Json$Decode$string));
+var author$project$Main$stackFrameDecoder = A5(
+	elm$json$Json$Decode$map4,
+	author$project$Main$StackFrame,
+	A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
+	A2(elm$json$Json$Decode$field, 'filename', elm$json$Json$Decode$string),
+	A2(elm$json$Json$Decode$field, 'lineno', elm$json$Json$Decode$int),
+	A2(elm$json$Json$Decode$field, 'line', elm$json$Json$Decode$string));
+var elm$json$Json$Decode$list = _Json_decodeList;
+var author$project$Main$stacktraceDecoder = A2(
+	elm$json$Json$Decode$field,
+	'stacktrace',
+	elm$json$Json$Decode$list(author$project$Main$stackFrameDecoder));
 var elm$core$Result$mapError = F2(
 	function (f, result) {
 		if (result.$ === 'Ok') {
@@ -5921,6 +5910,42 @@ var elm$http$Http$get = function (r) {
 	return elm$http$Http$request(
 		{body: elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
 };
+var author$project$Main$loadStacktrace = elm$http$Http$get(
+	{
+		expect: A2(elm$http$Http$expectJson, author$project$Main$GotStacktrace, author$project$Main$stacktraceDecoder),
+		url: 'http://127.0.0.1:5000/traceback.json'
+	});
+var author$project$Main$GotStats = function (a) {
+	return {$: 'GotStats', a: a};
+};
+var author$project$Main$Stats = F5(
+	function (tasksLiving, tasksRunnable, secondsToNextDeadline, runSyncSoonQueueSize, ioStatisticsBackend) {
+		return {ioStatisticsBackend: ioStatisticsBackend, runSyncSoonQueueSize: runSyncSoonQueueSize, secondsToNextDeadline: secondsToNextDeadline, tasksLiving: tasksLiving, tasksRunnable: tasksRunnable};
+	});
+var elm$json$Json$Decode$float = _Json_decodeFloat;
+var elm$json$Json$Decode$map5 = _Json_map5;
+var elm$json$Json$Decode$map = _Json_map1;
+var elm$json$Json$Decode$null = _Json_decodeNull;
+var elm$json$Json$Decode$oneOf = _Json_oneOf;
+var elm$json$Json$Decode$nullable = function (decoder) {
+	return elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				elm$json$Json$Decode$null(elm$core$Maybe$Nothing),
+				A2(elm$json$Json$Decode$map, elm$core$Maybe$Just, decoder)
+			]));
+};
+var author$project$Main$statsDecoder = A6(
+	elm$json$Json$Decode$map5,
+	author$project$Main$Stats,
+	A2(elm$json$Json$Decode$field, 'tasks_living', elm$json$Json$Decode$int),
+	A2(elm$json$Json$Decode$field, 'tasks_runnable', elm$json$Json$Decode$int),
+	A2(
+		elm$json$Json$Decode$field,
+		'seconds_to_next_deadline',
+		elm$json$Json$Decode$nullable(elm$json$Json$Decode$float)),
+	A2(elm$json$Json$Decode$field, 'run_sync_soon_queue_size', elm$json$Json$Decode$int),
+	A2(elm$json$Json$Decode$field, 'io_statistics_backend', elm$json$Json$Decode$string));
 var author$project$Main$loadStats = elm$http$Http$get(
 	{
 		expect: A2(elm$http$Http$expectJson, author$project$Main$GotStats, author$project$Main$statsDecoder),
@@ -5948,7 +5973,6 @@ var elm$json$Json$Decode$lazy = function (thunk) {
 		thunk,
 		elm$json$Json$Decode$succeed(_Utils_Tuple0));
 };
-var elm$json$Json$Decode$list = _Json_decodeList;
 var elm$json$Json$Decode$map3 = _Json_map3;
 function author$project$Main$cyclic$nurseryDecoder() {
 	return A4(
@@ -6009,10 +6033,10 @@ var author$project$Main$loadTasks = elm$http$Http$get(
 var elm$core$Platform$Cmd$batch = _Platform_batch;
 var author$project$Main$init = function (_n0) {
 	return _Utils_Tuple2(
-		{rootTask: elm$core$Maybe$Nothing, stats: elm$core$Maybe$Nothing},
+		{rootTask: elm$core$Maybe$Nothing, stacktrace: elm$core$Maybe$Nothing, stats: elm$core$Maybe$Nothing},
 		elm$core$Platform$Cmd$batch(
 			_List_fromArray(
-				[author$project$Main$loadTasks, author$project$Main$loadStats])));
+				[author$project$Main$loadTasks, author$project$Main$loadStats, author$project$Main$loadStacktrace])));
 };
 var author$project$Main$Update = {$: 'Update'};
 var elm$time$Time$Every = F2(
@@ -6316,7 +6340,7 @@ var author$project$Main$update = F2(
 					model,
 					elm$core$Platform$Cmd$batch(
 						_List_fromArray(
-							[author$project$Main$loadTasks, author$project$Main$loadStats])));
+							[author$project$Main$loadTasks, author$project$Main$loadStats, author$project$Main$loadStacktrace])));
 			case 'GotTasks':
 				var result = msg.a;
 				if (result.$ === 'Ok') {
@@ -6335,7 +6359,7 @@ var author$project$Main$update = F2(
 							{rootTask: elm$core$Maybe$Nothing}),
 						elm$core$Platform$Cmd$none);
 				}
-			default:
+			case 'GotStats':
 				var result = msg.a;
 				if (result.$ === 'Ok') {
 					var stats = result.a;
@@ -6351,6 +6375,24 @@ var author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{stats: elm$core$Maybe$Nothing}),
+						elm$core$Platform$Cmd$none);
+				}
+			default:
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var stacktrace = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								stacktrace: elm$core$Maybe$Just(stacktrace)
+							}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{stacktrace: elm$core$Maybe$Nothing}),
 						elm$core$Platform$Cmd$none);
 				}
 		}
@@ -6457,7 +6499,95 @@ var author$project$Main$navBar = A2(
 						]))
 				]))
 		]));
+var elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(x);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
 var elm$html$Html$div = _VirtualDom_node('div');
+var elm$html$Html$h5 = _VirtualDom_node('h5');
+var elm$html$Html$p = _VirtualDom_node('p');
+var elm$html$Html$small = _VirtualDom_node('small');
+var author$project$Main$viewStacktrace = function (stacktrace) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('list-group')
+			]),
+		A2(
+			elm$core$List$map,
+			function (frame) {
+				var basename = elm$core$List$head(
+					elm$core$List$reverse(
+						A2(elm$core$String$split, '/', frame.filename)));
+				var basenameWithLineNo = function () {
+					if (basename.$ === 'Nothing') {
+						return '-';
+					} else {
+						var name = basename.a;
+						return name + (':' + elm$core$String$fromInt(frame.lineno));
+					}
+				}();
+				return A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('list-group-item flex-column align-items-start')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('d-flex w-100 justify-content-between')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$h5,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('mb-1')
+										]),
+									_List_fromArray(
+										[
+											elm$html$Html$text(frame.name)
+										])),
+									A2(
+									elm$html$Html$small,
+									_List_Nil,
+									_List_fromArray(
+										[
+											elm$html$Html$text(basenameWithLineNo)
+										]))
+								])),
+							A2(
+							elm$html$Html$p,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('mb-1')
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text(frame.line)
+								])),
+							A2(
+							elm$html$Html$small,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text(frame.filename)
+								]))
+						]));
+			},
+			stacktrace));
+};
 var elm$html$Html$table = _VirtualDom_node('table');
 var elm$html$Html$tbody = _VirtualDom_node('tbody');
 var elm$html$Html$td = _VirtualDom_node('td');
@@ -6614,8 +6744,8 @@ var author$project$Main$icon = function (name) {
 			]));
 };
 var author$project$Main$viewNurseryTree = function (nursery) {
-	var _n0 = nursery.tasks;
-	var children = _n0.a;
+	var _n1 = nursery.tasks;
+	var children = _n1.a;
 	return A2(
 		elm$html$Html$div,
 		_List_fromArray(
@@ -6637,25 +6767,30 @@ var author$project$Main$viewNurseryTree = function (nursery) {
 			A2(elm$core$List$map, author$project$Main$viewTaskTree, children)));
 };
 var author$project$Main$viewTaskTree = function (task) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('tasktree-item task')
-			]),
-		_Utils_ap(
+	var _n0 = task.name;
+	if (_n0 === 'trio_inspector.inspector.TrioInspector.run') {
+		return A2(elm$html$Html$div, _List_Nil, _List_Nil);
+	} else {
+		return A2(
+			elm$html$Html$div,
 			_List_fromArray(
 				[
-					A2(
-					elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[
-							author$project$Main$icon('arrow_drop_down'),
-							elm$html$Html$text(task.name)
-						]))
+					elm$html$Html$Attributes$class('tasktree-item task')
 				]),
-			A2(elm$core$List$map, author$project$Main$viewNurseryTree, task.nurseries)));
+			_Utils_ap(
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								author$project$Main$icon('arrow_drop_down'),
+								elm$html$Html$text(task.name)
+							]))
+					]),
+				A2(elm$core$List$map, author$project$Main$viewNurseryTree, task.nurseries)));
+	}
 };
 var author$project$Main$viewMain = function (model) {
 	return A2(
@@ -6710,11 +6845,20 @@ var author$project$Main$viewMain = function (model) {
 								_List_fromArray(
 									[
 										function () {
-										var _n1 = model.stats;
+										var _n1 = model.stacktrace;
 										if (_n1.$ === 'Nothing') {
 											return A2(elm$html$Html$div, _List_Nil, _List_Nil);
 										} else {
-											var stats = _n1.a;
+											var stacktrace = _n1.a;
+											return author$project$Main$viewStacktrace(stacktrace);
+										}
+									}(),
+										function () {
+										var _n2 = model.stats;
+										if (_n2.$ === 'Nothing') {
+											return A2(elm$html$Html$div, _List_Nil, _List_Nil);
+										} else {
+											var stats = _n2.a;
 											return author$project$Main$viewStats(stats);
 										}
 									}()
