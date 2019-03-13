@@ -8,7 +8,7 @@ setup(
     name="trio-inspector",
     version=__version__,
     description="A browser-based monitor for Trio",
-    url="https://github.com/syncrypt/trio-inspector.git",
+    url="https://github.com/syncrypt/trio-inspector/",
     long_description=open("README.md").read(),
     author="Hannes Gräuler",
     author_email="hannes@syncrypt.space",
