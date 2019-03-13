@@ -267,16 +267,21 @@ viewStacktrace stacktrace =
 
 viewTaskTree : Task -> Html Msg
 viewTaskTree task =
-    div [ class "tasktree-item task" ]
-        ([ div []
-            [ icon "arrow_drop_down"
-            , text task.name
-            ]
-         ]
-            ++ List.map
-                viewNurseryTree
-                task.nurseries
-        )
+    case task.name of
+        "trio_inspector.inspector.TrioInspector.run" ->
+            div [] []
+
+        _ ->
+            div [ class "tasktree-item task" ]
+                ([ div []
+                    [ icon "arrow_drop_down"
+                    , text task.name
+                    ]
+                 ]
+                    ++ List.map
+                        viewNurseryTree
+                        task.nurseries
+                )
 
 
 icon : String -> Html Msg
