@@ -33,7 +33,7 @@ setup(
         # COOKIECUTTER-TRIO-TODO: add some keywords
         # "async", "io", "networking", ...
     ],
-    python_requires=">=3.5",
+    python_requires=">=3.7",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Framework :: Trio",

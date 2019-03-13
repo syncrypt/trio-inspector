@@ -4,6 +4,8 @@ Note: This is a very early prototype.
 
 ## Installation
 
+Currently requires Python 3.7 due to ``quart-trio`` dependency.
+
 ```
 pip install trio-inspector
 ```
