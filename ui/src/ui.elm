@@ -25,6 +25,7 @@ import Json.Decode
         , succeed
         , value
         )
+import List.FlatMap exposing (flatMap)
 import Time
 
 
@@ -86,13 +87,22 @@ type alias Stacktrace =
 type alias Model =
     { rootTask : Maybe Task
     , stats : Maybe Stats
+    , selectedTaskId : Maybe Int
     , stacktrace : Maybe Stacktrace
+    }
+
+
+initialState =
+    { rootTask = Nothing
+    , stats = Nothing
+    , stacktrace = Nothing
+    , selectedTaskId = Nothing
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { rootTask = Nothing, stats = Nothing, stacktrace = Nothing }
+    ( initialState
     , Cmd.batch [ loadTasks, loadStats, loadStacktrace ]
     )
 
@@ -106,6 +116,7 @@ type Msg
     | GotTasks (Result Http.Error Task)
     | GotStats (Result Http.Error Stats)
     | GotStacktrace (Result Http.Error Stacktrace)
+    | SelectTaskId Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -137,6 +148,9 @@ update msg model =
 
                 Err _ ->
                     ( { model | stacktrace = Nothing }, Cmd.none )
+
+        SelectTaskId id ->
+            ( { model | selectedTaskId = Just id }, Cmd.none )
 
 
 
@@ -172,8 +186,50 @@ navBar =
         ]
 
 
+isJust : Maybe t -> Bool
+isJust t =
+    case t of
+        Just _ ->
+            True
+
+        Nothing ->
+            False
+
+
+findTaskById : Task -> Int -> Maybe Task
+findTaskById task id =
+    if task.id == id then
+        Just task
+    else
+        flatMap
+            (\nursery ->
+                let
+                    (Tasks tasks) =
+                        nursery.tasks
+                in
+                List.map (\t -> findTaskById t id) tasks |> List.filter isJust
+            )
+            task.nurseries
+            |> List.head
+            |> Maybe.withDefault Nothing
+
+
+findSelectedTask : Model -> Maybe Task
+findSelectedTask model =
+    case model.rootTask of
+        Just task ->
+            model.selectedTaskId |> Maybe.andThen (findTaskById task)
+
+        Nothing ->
+            Nothing
+
+
 viewMain : Model -> Html Msg
 viewMain model =
+    let
+        selectedTask =
+            findSelectedTask model
+    in
     div [ class "card" ]
         [ navBar
         , div [ class "container" ]
@@ -184,10 +240,16 @@ viewMain model =
                             div [] []
 
                         Just rootTask ->
-                            viewTaskTree rootTask
+                            viewTaskTree model.selectedTaskId rootTask
                     ]
                 , div [ class "stats col-sm-6" ]
-                    [ case model.stacktrace of
+                    [ case selectedTask of
+                        Nothing ->
+                            div [] []
+
+                        Just task ->
+                            div [] [ h3 [] [ text task.name ] ]
+                    , case model.stacktrace of
                         Nothing ->
                             div [] []
 
@@ -265,21 +327,40 @@ viewStacktrace stacktrace =
         )
 
 
-viewTaskTree : Task -> Html Msg
-viewTaskTree task =
+viewTaskTree : Maybe Int -> Task -> Html Msg
+viewTaskTree selectedTaskId task =
     case task.name of
         "trio_inspector.inspector.TrioInspector.run" ->
             div [] []
 
         _ ->
-            div [ class "tasktree-item task" ]
-                ([ div []
+            let
+                isSelected =
+                    case selectedTaskId of
+                        Nothing ->
+                            False
+
+                        Just id ->
+                            task.id == id
+
+                labelClasses =
+                    if isSelected then
+                        " active bg-primary"
+                    else
+                        ""
+            in
+            div
+                [ class "tasktree-item task" ]
+                ([ div
+                    [ class ("tasktree-label" ++ labelClasses)
+                    , onClick (SelectTaskId task.id)
+                    ]
                     [ icon "arrow_drop_down"
                     , text task.name
                     ]
                  ]
                     ++ List.map
-                        viewNurseryTree
+                        (viewNurseryTree selectedTaskId)
                         task.nurseries
                 )
 
@@ -289,8 +370,8 @@ icon name =
     Html.i [ class "material-icons" ] [ text name ]
 
 
-viewNurseryTree : Nursery -> Html Msg
-viewNurseryTree nursery =
+viewNurseryTree : Maybe Int -> Nursery -> Html Msg
+viewNurseryTree selectedTaskId nursery =
     let
         (Tasks children) =
             nursery.tasks
@@ -301,7 +382,7 @@ viewNurseryTree nursery =
             , text ("Nursery: " ++ nursery.name)
             ]
          ]
-            ++ List.map viewTaskTree children
+            ++ List.map (viewTaskTree selectedTaskId) children
         )
 
 
