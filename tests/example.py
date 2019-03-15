@@ -11,7 +11,7 @@ async def stubborn_spawner(n):
     while True:
         async with trio.open_nursery() as nursery:
             for i in range(n):
-                nursery.start_soon(sleep_seconds, randint(1,10))
+                nursery.start_soon(sleep_seconds, randint(1, 10))
 
 
 async def child2():
