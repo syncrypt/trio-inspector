@@ -103,7 +103,7 @@ initialState =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( initialState
-    , Cmd.batch [ loadTasks, loadStats, loadStacktrace ]
+    , Cmd.batch [ loadTasks, loadStats ]
     )
 
 
@@ -113,6 +113,7 @@ init _ =
 
 type Msg
     = Update
+    | UpdateStacktrace Int
     | GotTasks (Result Http.Error Task)
     | GotStats (Result Http.Error Stats)
     | GotStacktrace (Result Http.Error Stacktrace)
@@ -123,7 +124,10 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Update ->
-            ( model, Cmd.batch [ loadTasks, loadStats, loadStacktrace ] )
+            ( model, Cmd.batch [ loadTasks, loadStats ] )
+
+        UpdateStacktrace taskId ->
+            ( model, loadStacktrace taskId )
 
         GotTasks result ->
             case result of
@@ -150,7 +154,7 @@ update msg model =
                     ( { model | stacktrace = Nothing }, Cmd.none )
 
         SelectTaskId id ->
-            ( { model | selectedTaskId = Just id }, Cmd.none )
+            ( { model | selectedTaskId = Just id, stacktrace = Nothing }, Cmd.none )
 
 
 
@@ -159,7 +163,17 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every (2 * 1000) (\_ -> Update)
+    Sub.batch
+        ([ Time.every (2 * 1000) (\_ -> Update)
+         ]
+            ++ (case model.selectedTaskId of
+                    Just taskId ->
+                        [ Time.every (2 * 1000) (\_ -> UpdateStacktrace taskId) ]
+
+                    Nothing ->
+                        []
+               )
+        )
 
 
 
@@ -406,10 +420,10 @@ loadStats =
         }
 
 
-loadStacktrace : Cmd Msg
-loadStacktrace =
+loadStacktrace : Int -> Cmd Msg
+loadStacktrace taskId =
     Http.get
-        { url = "http://127.0.0.1:5000/traceback.json"
+        { url = "http://127.0.0.1:5000/task/" ++ String.fromInt taskId ++ "/stacktrace.json"
         , expect = Http.expectJson GotStacktrace stacktraceDecoder
         }
 

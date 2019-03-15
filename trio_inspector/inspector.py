@@ -2,11 +2,14 @@ import json
 import math
 import os.path
 import traceback
+from typing import Optional
 
 import trio
 import trio.testing
 from hypercorn.config import Config as HyperConfig
 from hypercorn.trio import serve
+from quart import request
+from quart.exceptions import NotFound
 from quart.logging import create_serving_logger
 from quart_cors import cors
 from quart_trio import QuartTrio
@@ -65,6 +68,20 @@ class TrioInspector(trio.abc.Instrument):
         return task
 
     @staticmethod
+    def find_task_by_id(task_id: int) -> Optional[Task]:
+        root_task = TrioInspector.get_root_task()
+        def _find_task_by_id(task, task_id):
+            if id(task) == task_id:
+                return task
+            for nursery in task.child_nurseries:
+                for child in nursery.child_tasks:
+                    maybe_task = _find_task_by_id(child, task_id)
+                    if maybe_task:
+                        return maybe_task
+            return None
+        return _find_task_by_id(root_task, task_id)
+
+    @staticmethod
     def walk_coro_stack(coro):
         while coro is not None:
             if hasattr(coro, "cr_frame"):
@@ -76,8 +93,10 @@ class TrioInspector(trio.abc.Instrument):
                 yield coro.gi_frame, coro.gi_frame.f_lineno
                 coro = coro.gi_yieldfrom
 
-    async def dispatch_task_traceback(task):
-        task = TrioInspector.get_root_task()
+    async def dispatch_task_stacktrace(self, task_id: int):
+        task = TrioInspector.find_task_by_id(task_id)
+        if task is None:
+            raise NotFound()
         stack_summary = traceback.StackSummary.extract(
             TrioInspector.walk_coro_stack(task.coro)
         )
@@ -113,8 +132,8 @@ class TrioInspector(trio.abc.Instrument):
         app.add_url_rule('/<path:filename>', 'static', app.send_static_file)
 
         app.add_url_rule('/tasks.json', 'task_tree', self.dispatch_task_tree, ['GET'])
-        app.add_url_rule('/traceback.json', 'task_traceback',
-                self.dispatch_task_traceback, ['GET'])
+        app.add_url_rule('/task/<int:task_id>/stacktrace.json', 'task_stacktrace',
+                self.dispatch_task_stacktrace, ['GET'])
         app.add_url_rule('/stats.json', 'stats', self.dispatch_stats, ['GET'])
 
         config = HyperConfig()
