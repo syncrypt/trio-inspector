@@ -4531,12 +4531,14 @@ function _Browser_load(url)
 		}
 	}));
 }
-var author$project$Main$GotStacktrace = function (a) {
-	return {$: 'GotStacktrace', a: a};
+var elm$core$Maybe$Nothing = {$: 'Nothing'};
+var author$project$Main$initialState = {rootTask: elm$core$Maybe$Nothing, selectedTaskId: elm$core$Maybe$Nothing, stacktrace: elm$core$Maybe$Nothing, stats: elm$core$Maybe$Nothing};
+var author$project$Main$GotStats = function (a) {
+	return {$: 'GotStats', a: a};
 };
-var author$project$Main$StackFrame = F4(
-	function (name, filename, lineno, line) {
-		return {filename: filename, line: line, lineno: lineno, name: name};
+var author$project$Main$Stats = F5(
+	function (tasksLiving, tasksRunnable, secondsToNextDeadline, runSyncSoonQueueSize, ioStatisticsBackend) {
+		return {ioStatisticsBackend: ioStatisticsBackend, runSyncSoonQueueSize: runSyncSoonQueueSize, secondsToNextDeadline: secondsToNextDeadline, tasksLiving: tasksLiving, tasksRunnable: tasksRunnable};
 	});
 var elm$core$Array$branchFactor = 32;
 var elm$core$Array$Array_elm_builtin = F4(
@@ -4793,7 +4795,6 @@ var elm$core$Array$initialize = F2(
 var elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
 };
-var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
@@ -5014,21 +5015,32 @@ var elm$json$Json$Decode$errorToStringHelp = F2(
 		}
 	});
 var elm$json$Json$Decode$field = _Json_decodeField;
+var elm$json$Json$Decode$float = _Json_decodeFloat;
 var elm$json$Json$Decode$int = _Json_decodeInt;
-var elm$json$Json$Decode$map4 = _Json_map4;
+var elm$json$Json$Decode$map5 = _Json_map5;
+var elm$json$Json$Decode$map = _Json_map1;
+var elm$json$Json$Decode$null = _Json_decodeNull;
+var elm$json$Json$Decode$oneOf = _Json_oneOf;
+var elm$json$Json$Decode$nullable = function (decoder) {
+	return elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				elm$json$Json$Decode$null(elm$core$Maybe$Nothing),
+				A2(elm$json$Json$Decode$map, elm$core$Maybe$Just, decoder)
+			]));
+};
 var elm$json$Json$Decode$string = _Json_decodeString;
-var author$project$Main$stackFrameDecoder = A5(
-	elm$json$Json$Decode$map4,
-	author$project$Main$StackFrame,
-	A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
-	A2(elm$json$Json$Decode$field, 'filename', elm$json$Json$Decode$string),
-	A2(elm$json$Json$Decode$field, 'lineno', elm$json$Json$Decode$int),
-	A2(elm$json$Json$Decode$field, 'line', elm$json$Json$Decode$string));
-var elm$json$Json$Decode$list = _Json_decodeList;
-var author$project$Main$stacktraceDecoder = A2(
-	elm$json$Json$Decode$field,
-	'stacktrace',
-	elm$json$Json$Decode$list(author$project$Main$stackFrameDecoder));
+var author$project$Main$statsDecoder = A6(
+	elm$json$Json$Decode$map5,
+	author$project$Main$Stats,
+	A2(elm$json$Json$Decode$field, 'tasks_living', elm$json$Json$Decode$int),
+	A2(elm$json$Json$Decode$field, 'tasks_runnable', elm$json$Json$Decode$int),
+	A2(
+		elm$json$Json$Decode$field,
+		'seconds_to_next_deadline',
+		elm$json$Json$Decode$nullable(elm$json$Json$Decode$float)),
+	A2(elm$json$Json$Decode$field, 'run_sync_soon_queue_size', elm$json$Json$Decode$int),
+	A2(elm$json$Json$Decode$field, 'io_statistics_backend', elm$json$Json$Decode$string));
 var elm$core$Result$mapError = F2(
 	function (f, result) {
 		if (result.$ === 'Ok') {
@@ -5910,42 +5922,6 @@ var elm$http$Http$get = function (r) {
 	return elm$http$Http$request(
 		{body: elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: elm$core$Maybe$Nothing, tracker: elm$core$Maybe$Nothing, url: r.url});
 };
-var author$project$Main$loadStacktrace = elm$http$Http$get(
-	{
-		expect: A2(elm$http$Http$expectJson, author$project$Main$GotStacktrace, author$project$Main$stacktraceDecoder),
-		url: 'http://127.0.0.1:5000/traceback.json'
-	});
-var author$project$Main$GotStats = function (a) {
-	return {$: 'GotStats', a: a};
-};
-var author$project$Main$Stats = F5(
-	function (tasksLiving, tasksRunnable, secondsToNextDeadline, runSyncSoonQueueSize, ioStatisticsBackend) {
-		return {ioStatisticsBackend: ioStatisticsBackend, runSyncSoonQueueSize: runSyncSoonQueueSize, secondsToNextDeadline: secondsToNextDeadline, tasksLiving: tasksLiving, tasksRunnable: tasksRunnable};
-	});
-var elm$json$Json$Decode$float = _Json_decodeFloat;
-var elm$json$Json$Decode$map5 = _Json_map5;
-var elm$json$Json$Decode$map = _Json_map1;
-var elm$json$Json$Decode$null = _Json_decodeNull;
-var elm$json$Json$Decode$oneOf = _Json_oneOf;
-var elm$json$Json$Decode$nullable = function (decoder) {
-	return elm$json$Json$Decode$oneOf(
-		_List_fromArray(
-			[
-				elm$json$Json$Decode$null(elm$core$Maybe$Nothing),
-				A2(elm$json$Json$Decode$map, elm$core$Maybe$Just, decoder)
-			]));
-};
-var author$project$Main$statsDecoder = A6(
-	elm$json$Json$Decode$map5,
-	author$project$Main$Stats,
-	A2(elm$json$Json$Decode$field, 'tasks_living', elm$json$Json$Decode$int),
-	A2(elm$json$Json$Decode$field, 'tasks_runnable', elm$json$Json$Decode$int),
-	A2(
-		elm$json$Json$Decode$field,
-		'seconds_to_next_deadline',
-		elm$json$Json$Decode$nullable(elm$json$Json$Decode$float)),
-	A2(elm$json$Json$Decode$field, 'run_sync_soon_queue_size', elm$json$Json$Decode$int),
-	A2(elm$json$Json$Decode$field, 'io_statistics_backend', elm$json$Json$Decode$string));
 var author$project$Main$loadStats = elm$http$Http$get(
 	{
 		expect: A2(elm$http$Http$expectJson, author$project$Main$GotStats, author$project$Main$statsDecoder),
@@ -5973,6 +5949,7 @@ var elm$json$Json$Decode$lazy = function (thunk) {
 		thunk,
 		elm$json$Json$Decode$succeed(_Utils_Tuple0));
 };
+var elm$json$Json$Decode$list = _Json_decodeList;
 var elm$json$Json$Decode$map3 = _Json_map3;
 function author$project$Main$cyclic$nurseryDecoder() {
 	return A4(
@@ -6033,12 +6010,16 @@ var author$project$Main$loadTasks = elm$http$Http$get(
 var elm$core$Platform$Cmd$batch = _Platform_batch;
 var author$project$Main$init = function (_n0) {
 	return _Utils_Tuple2(
-		{rootTask: elm$core$Maybe$Nothing, stacktrace: elm$core$Maybe$Nothing, stats: elm$core$Maybe$Nothing},
+		author$project$Main$initialState,
 		elm$core$Platform$Cmd$batch(
 			_List_fromArray(
-				[author$project$Main$loadTasks, author$project$Main$loadStats, author$project$Main$loadStacktrace])));
+				[author$project$Main$loadTasks, author$project$Main$loadStats])));
 };
 var author$project$Main$Update = {$: 'Update'};
+var author$project$Main$UpdateStacktrace = function (a) {
+	return {$: 'UpdateStacktrace', a: a};
+};
+var elm$core$Platform$Sub$batch = _Platform_batch;
 var elm$time$Time$Every = F2(
 	function (a, b) {
 		return {$: 'Every', a: a, b: b};
@@ -6324,11 +6305,59 @@ var elm$time$Time$every = F2(
 			A2(elm$time$Time$Every, interval, tagger));
 	});
 var author$project$Main$subscriptions = function (model) {
-	return A2(
-		elm$time$Time$every,
-		2 * 1000,
-		function (_n0) {
-			return author$project$Main$Update;
+	return elm$core$Platform$Sub$batch(
+		_Utils_ap(
+			_List_fromArray(
+				[
+					A2(
+					elm$time$Time$every,
+					2 * 1000,
+					function (_n0) {
+						return author$project$Main$Update;
+					})
+				]),
+			function () {
+				var _n1 = model.selectedTaskId;
+				if (_n1.$ === 'Just') {
+					var taskId = _n1.a;
+					return _List_fromArray(
+						[
+							A2(
+							elm$time$Time$every,
+							2 * 1000,
+							function (_n2) {
+								return author$project$Main$UpdateStacktrace(taskId);
+							})
+						]);
+				} else {
+					return _List_Nil;
+				}
+			}()));
+};
+var author$project$Main$GotStacktrace = function (a) {
+	return {$: 'GotStacktrace', a: a};
+};
+var author$project$Main$StackFrame = F4(
+	function (name, filename, lineno, line) {
+		return {filename: filename, line: line, lineno: lineno, name: name};
+	});
+var elm$json$Json$Decode$map4 = _Json_map4;
+var author$project$Main$stackFrameDecoder = A5(
+	elm$json$Json$Decode$map4,
+	author$project$Main$StackFrame,
+	A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
+	A2(elm$json$Json$Decode$field, 'filename', elm$json$Json$Decode$string),
+	A2(elm$json$Json$Decode$field, 'lineno', elm$json$Json$Decode$int),
+	A2(elm$json$Json$Decode$field, 'line', elm$json$Json$Decode$string));
+var author$project$Main$stacktraceDecoder = A2(
+	elm$json$Json$Decode$field,
+	'stacktrace',
+	elm$json$Json$Decode$list(author$project$Main$stackFrameDecoder));
+var author$project$Main$loadStacktrace = function (taskId) {
+	return elm$http$Http$get(
+		{
+			expect: A2(elm$http$Http$expectJson, author$project$Main$GotStacktrace, author$project$Main$stacktraceDecoder),
+			url: 'http://127.0.0.1:5000/task/' + (elm$core$String$fromInt(taskId) + '/stacktrace.json')
 		});
 };
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
@@ -6340,7 +6369,12 @@ var author$project$Main$update = F2(
 					model,
 					elm$core$Platform$Cmd$batch(
 						_List_fromArray(
-							[author$project$Main$loadTasks, author$project$Main$loadStats, author$project$Main$loadStacktrace])));
+							[author$project$Main$loadTasks, author$project$Main$loadStats])));
+			case 'UpdateStacktrace':
+				var taskId = msg.a;
+				return _Utils_Tuple2(
+					model,
+					author$project$Main$loadStacktrace(taskId));
 			case 'GotTasks':
 				var result = msg.a;
 				if (result.$ === 'Ok') {
@@ -6377,7 +6411,7 @@ var author$project$Main$update = F2(
 							{stats: elm$core$Maybe$Nothing}),
 						elm$core$Platform$Cmd$none);
 				}
-			default:
+			case 'GotStacktrace':
 				var result = msg.a;
 				if (result.$ === 'Ok') {
 					var stacktrace = result.a;
@@ -6395,8 +6429,104 @@ var author$project$Main$update = F2(
 							{stacktrace: elm$core$Maybe$Nothing}),
 						elm$core$Platform$Cmd$none);
 				}
+			default:
+				var id = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							selectedTaskId: elm$core$Maybe$Just(id),
+							stacktrace: elm$core$Maybe$Nothing
+						}),
+					elm$core$Platform$Cmd$none);
 		}
 	});
+var author$project$Main$isJust = function (t) {
+	if (t.$ === 'Just') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var ccapndave$elm_flat_map$List$FlatMap$join = A2(elm$core$List$foldr, elm$core$Basics$append, _List_Nil);
+var ccapndave$elm_flat_map$List$FlatMap$flatMap = F2(
+	function (f, list) {
+		return ccapndave$elm_flat_map$List$FlatMap$join(
+			A2(elm$core$List$map, f, list));
+	});
+var elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(x);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var author$project$Main$findTaskById = F2(
+	function (task, id) {
+		return _Utils_eq(task.id, id) ? elm$core$Maybe$Just(task) : A2(
+			elm$core$Maybe$withDefault,
+			elm$core$Maybe$Nothing,
+			elm$core$List$head(
+				A2(
+					ccapndave$elm_flat_map$List$FlatMap$flatMap,
+					function (nursery) {
+						var _n0 = nursery.tasks;
+						var tasks = _n0.a;
+						return A2(
+							elm$core$List$filter,
+							author$project$Main$isJust,
+							A2(
+								elm$core$List$map,
+								function (t) {
+									return A2(author$project$Main$findTaskById, t, id);
+								},
+								tasks));
+					},
+					task.nurseries)));
+	});
+var elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (maybeValue.$ === 'Just') {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	});
+var author$project$Main$findSelectedTask = function (model) {
+	var _n0 = model.rootTask;
+	if (_n0.$ === 'Just') {
+		var task = _n0.a;
+		return A2(
+			elm$core$Maybe$andThen,
+			author$project$Main$findTaskById(task),
+			model.selectedTaskId);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 	switch (handler.$) {
@@ -6499,15 +6629,6 @@ var author$project$Main$navBar = A2(
 						]))
 				]))
 		]));
-var elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return elm$core$Maybe$Just(x);
-	} else {
-		return elm$core$Maybe$Nothing;
-	}
-};
 var elm$html$Html$div = _VirtualDom_node('div');
 var elm$html$Html$h5 = _VirtualDom_node('h5');
 var elm$html$Html$p = _VirtualDom_node('p');
@@ -6730,6 +6851,9 @@ var author$project$Main$viewStats = function (stats) {
 					]))
 			]));
 };
+var author$project$Main$SelectTaskId = function (a) {
+	return {$: 'SelectTaskId', a: a};
+};
 var elm$html$Html$i = _VirtualDom_node('i');
 var author$project$Main$icon = function (name) {
 	return A2(
@@ -6743,39 +6867,32 @@ var author$project$Main$icon = function (name) {
 				elm$html$Html$text(name)
 			]));
 };
-var author$project$Main$viewNurseryTree = function (nursery) {
-	var _n1 = nursery.tasks;
-	var children = _n1.a;
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('tasktree-item nursery')
-			]),
-		_Utils_ap(
-			_List_fromArray(
-				[
-					A2(
-					elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[
-							author$project$Main$icon('arrow_drop_down'),
-							elm$html$Html$text('Nursery: ' + nursery.name)
-						]))
-				]),
-			A2(elm$core$List$map, author$project$Main$viewTaskTree, children)));
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
 };
-var author$project$Main$viewTaskTree = function (task) {
-	var _n0 = task.name;
-	if (_n0 === 'trio_inspector.inspector.TrioInspector.run') {
-		return A2(elm$html$Html$div, _List_Nil, _List_Nil);
-	} else {
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
+var author$project$Main$viewNurseryTree = F2(
+	function (selectedTaskId, nursery) {
+		var _n2 = nursery.tasks;
+		var children = _n2.a;
 		return A2(
 			elm$html$Html$div,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('tasktree-item task')
+					elm$html$Html$Attributes$class('tasktree-item nursery')
 				]),
 			_Utils_ap(
 				_List_fromArray(
@@ -6786,13 +6903,61 @@ var author$project$Main$viewTaskTree = function (task) {
 						_List_fromArray(
 							[
 								author$project$Main$icon('arrow_drop_down'),
-								elm$html$Html$text(task.name)
+								elm$html$Html$text('Nursery: ' + nursery.name)
 							]))
 					]),
-				A2(elm$core$List$map, author$project$Main$viewNurseryTree, task.nurseries)));
-	}
-};
+				A2(
+					elm$core$List$map,
+					author$project$Main$viewTaskTree(selectedTaskId),
+					children)));
+	});
+var author$project$Main$viewTaskTree = F2(
+	function (selectedTaskId, task) {
+		var _n0 = task.name;
+		if (_n0 === 'trio_inspector.inspector.TrioInspector.run') {
+			return A2(elm$html$Html$div, _List_Nil, _List_Nil);
+		} else {
+			var isSelected = function () {
+				if (selectedTaskId.$ === 'Nothing') {
+					return false;
+				} else {
+					var id = selectedTaskId.a;
+					return _Utils_eq(task.id, id);
+				}
+			}();
+			var labelClasses = isSelected ? ' active bg-primary' : '';
+			return A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('tasktree-item task')
+					]),
+				_Utils_ap(
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('tasktree-label' + labelClasses),
+									elm$html$Html$Events$onClick(
+									author$project$Main$SelectTaskId(task.id))
+								]),
+							_List_fromArray(
+								[
+									author$project$Main$icon('arrow_drop_down'),
+									elm$html$Html$text(task.name)
+								]))
+						]),
+					A2(
+						elm$core$List$map,
+						author$project$Main$viewNurseryTree(selectedTaskId),
+						task.nurseries)));
+		}
+	});
+var elm$html$Html$h3 = _VirtualDom_node('h3');
 var author$project$Main$viewMain = function (model) {
+	var selectedTask = author$project$Main$findSelectedTask(model);
 	return A2(
 		elm$html$Html$div,
 		_List_fromArray(
@@ -6832,7 +6997,7 @@ var author$project$Main$viewMain = function (model) {
 											return A2(elm$html$Html$div, _List_Nil, _List_Nil);
 										} else {
 											var rootTask = _n0.a;
-											return author$project$Main$viewTaskTree(rootTask);
+											return A2(author$project$Main$viewTaskTree, model.selectedTaskId, rootTask);
 										}
 									}()
 									])),
@@ -6845,20 +7010,40 @@ var author$project$Main$viewMain = function (model) {
 								_List_fromArray(
 									[
 										function () {
-										var _n1 = model.stacktrace;
-										if (_n1.$ === 'Nothing') {
+										if (selectedTask.$ === 'Nothing') {
 											return A2(elm$html$Html$div, _List_Nil, _List_Nil);
 										} else {
-											var stacktrace = _n1.a;
+											var task = selectedTask.a;
+											return A2(
+												elm$html$Html$div,
+												_List_Nil,
+												_List_fromArray(
+													[
+														A2(
+														elm$html$Html$h3,
+														_List_Nil,
+														_List_fromArray(
+															[
+																elm$html$Html$text(task.name)
+															]))
+													]));
+										}
+									}(),
+										function () {
+										var _n2 = model.stacktrace;
+										if (_n2.$ === 'Nothing') {
+											return A2(elm$html$Html$div, _List_Nil, _List_Nil);
+										} else {
+											var stacktrace = _n2.a;
 											return author$project$Main$viewStacktrace(stacktrace);
 										}
 									}(),
 										function () {
-										var _n2 = model.stats;
-										if (_n2.$ === 'Nothing') {
+										var _n3 = model.stats;
+										if (_n3.$ === 'Nothing') {
 											return A2(elm$html$Html$div, _List_Nil, _List_Nil);
 										} else {
-											var stats = _n2.a;
+											var stats = _n3.a;
 											return author$project$Main$viewStats(stats);
 										}
 									}()

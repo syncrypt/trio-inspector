@@ -2,10 +2,19 @@
     vertical-align: bottom;
 }
 
-.tasktree-item {
+.tasktree .tasktree-item {
     padding-left: 20px;
 }
 
 .tasktree > .tasktree-item {
     padding-left: 0px;
+}
+
+.tasktree .tasktree-item .tasktree-label {
+    cursor: pointer;
+}
+
+.tasktree .tasktree-item .tasktree-label.active {
+    color: white;
+    cursor: initial;
 }
