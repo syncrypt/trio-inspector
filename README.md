@@ -2,6 +2,8 @@
 
 Note: This is a very early prototype.
 
+![Trio Inspector](docs/trio_inspector.png)
+
 ## Installation
 
 Currently requires Python 3.7 due to ``quart-trio`` dependency.
