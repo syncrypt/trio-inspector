@@ -13,8 +13,9 @@ from quart.exceptions import NotFound
 from quart.logging import create_serving_logger
 from quart_cors import cors
 from quart_trio import QuartTrio
-from trio.hazmat import Task, current_task
 
+from .model import (find_nursery_by_id, find_task_by_id, get_root_task,
+                    walk_coro_stack)
 from .serialization import frame_summary_to_json, nursery_to_json, task_to_json
 
 
@@ -60,52 +61,20 @@ class TrioInspector(trio.abc.Instrument):
     def after_run(self):
         print("!!! run finished")
 
-    @staticmethod
-    def get_root_task() -> Task:
-        task = current_task()
-        while task.parent_nursery is not None:
-            task = task.parent_nursery.parent_task
-        return task
-
-    @staticmethod
-    def find_task_by_id(task_id: int) -> Optional[Task]:
-        root_task = TrioInspector.get_root_task()
-        def _find_task_by_id(task, task_id):
-            if id(task) == task_id:
-                return task
-            for nursery in task.child_nurseries:
-                for child in nursery.child_tasks:
-                    maybe_task = _find_task_by_id(child, task_id)
-                    if maybe_task:
-                        return maybe_task
-            return None
-        return _find_task_by_id(root_task, task_id)
-
-    @staticmethod
-    def walk_coro_stack(coro):
-        while coro is not None:
-            if hasattr(coro, "cr_frame"):
-                # A real coroutine
-                yield coro.cr_frame, coro.cr_frame.f_lineno
-                coro = coro.cr_await
-            else:
-                # A generator decorated with @types.coroutine
-                yield coro.gi_frame, coro.gi_frame.f_lineno
-                coro = coro.gi_yieldfrom
-
     async def dispatch_task_stacktrace(self, task_id: int):
-        task = TrioInspector.find_task_by_id(task_id)
+        task = find_task_by_id(task_id)
         if task is None:
             raise NotFound()
-        stack_summary = traceback.StackSummary.extract(
-            TrioInspector.walk_coro_stack(task.coro)
-        )
+        stack_summary = traceback.StackSummary.extract(walk_coro_stack(task.coro))
         return json.dumps({
             'stacktrace': [frame_summary_to_json(fs) for fs in stack_summary]
         })
 
+    async def dispatch_nursery_cancel(self, nursery_id: int):
+        raise NotImplementedError()
+
     async def dispatch_task_tree(self):
-        root_task = TrioInspector.get_root_task()
+        root_task = get_root_task()
         return json.dumps(task_to_json(root_task))
 
     async def dispatch_stats(self):
@@ -134,6 +103,8 @@ class TrioInspector(trio.abc.Instrument):
         app.add_url_rule('/tasks.json', 'task_tree', self.dispatch_task_tree, ['GET'])
         app.add_url_rule('/task/<int:task_id>/stacktrace.json', 'task_stacktrace',
                 self.dispatch_task_stacktrace, ['GET'])
+        app.add_url_rule('/nursery/<int:nursery_id>/cancel', 'nursery_cancel',
+                self.dispatch_nursery_cancel, ['GET'])
         app.add_url_rule('/stats.json', 'stats', self.dispatch_stats, ['GET'])
 
         config = HyperConfig()
