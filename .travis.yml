@@ -14,7 +14,8 @@ env:
 
 install:
 - pip install .
-- pip install mypy
+- pip install mypy pytest pytest-trio
 
 script:
 - mypy $PACKAGE_NAME --ignore-missing-imports
+- pytest
