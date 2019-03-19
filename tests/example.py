@@ -3,8 +3,20 @@ from random import randint
 from trio_inspector import TrioInspector
 
 
-async def sleep_seconds(seconds):
+async def stack_depth_3(seconds):
     await trio.sleep(seconds)
+
+
+async def stack_depth_2(seconds):
+    await stack_depth_3(seconds)
+
+
+async def stack_depth_1(seconds):
+    await stack_depth_2(seconds)
+
+
+async def sleep_seconds(seconds):
+    await stack_depth_1(seconds)
 
 
 async def stubborn_spawner(n):
