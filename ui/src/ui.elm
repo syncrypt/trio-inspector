@@ -369,7 +369,10 @@ viewTaskTree selectedTaskId task =
                     [ class ("tasktree-label" ++ labelClasses)
                     , onClick (SelectTaskId task.id)
                     ]
-                    [ icon "arrow_drop_down"
+                    [ if List.length task.nurseries > 0 then
+                        icon "arrow_drop_down"
+                      else
+                        icon "radio_button_unchecked"
                     , text task.name
                     ]
                  ]
